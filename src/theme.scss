@@ -1,0 +1,54 @@
+@font-face {
+  font-family: 'Moscow Sans';
+  src: local(""), url('@/assets/fonts/MoscowSansRegular.woff2') format('woff2'),
+  local(""),url('@/assets/fonts/MoscowSansRegular.woff') format('woff');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  font-family: 'Moscow Sans', Inter, Avenir, Helvetica, Arial, sans-serif;
+  color-scheme: light dark;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  --border-radius: 4px;
+  --color-main: rgba(245, 245, 245, 1);
+  --color-main-75: rgba(245, 245, 245, .75);
+  --color-main-30: rgba(245, 245, 245, .3);
+  --color-additional: rgba(185, 246, 13, 1);
+  --color-additional-75: rgba(185, 246, 13, .75);
+  --color-additional-30: rgba(185, 246, 13, .3);
+  --color-accent: rgba(30, 84, 199, 1);
+  --color-accent-75: rgba(30, 84, 199, .75);
+  --color-accent-30: rgba(30, 84, 199, .3);
+  --color-font: rgba(0, 3, 18, 1);
+  --color-font-75: rgba(0, 3, 18, .75);
+  --color-font-30: rgba(0, 3, 18, .3);
+  --font-xs: 0.833rem;
+  --font-s: 1rem;
+  --font-m: 1.44rem;
+  --font-l: 2.074rem;
+  --font-xl: 2.488rem;
+  --font-xxl: 2.986rem;
+  //-font-3xl: 0px;
+  //-font-4xl: 0px;
+  color: var(--color-font);
+  font-size: var(--font-s);
+  background: var(--color-main);
+  font-weight: 400;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+  }
+}
