@@ -10,6 +10,6 @@ import mitt from 'mitt';
 const emitter = mitt();
 
 const app = createApp(App)
-app.config.globalProperties.$api = new api('/api/')
+app.config.globalProperties.$api = new api('https://hackers54.ru/api/v1.0/admins/')
 app.config.globalProperties.$emitter = emitter;
 app.use(store).use(router).mount('#app')

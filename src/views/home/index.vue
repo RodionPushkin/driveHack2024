@@ -1,125 +1,66 @@
 <template>
-  <div class="container-messenger">
-
+  <div class="wrapper">
+    <l-map ref="map" style="height: 100vh;width: 100vw;" v-model:zoom="zoom" v-model:center="center" :useGlobalLeaflet="false">
+<!--      <l-tile-layer url="https://tiles-eu.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}{r}.png"-->
+      <l-tile-layer url="http://{s}.tile.osm.org/{z}/{x}/{y}.png"
+                    layer-type="base"
+                    name="hackers54"></l-tile-layer>
+      <l-marker
+          v-if="this.cities.length > 0"
+          v-for="city in this.cities"
+          :key="city.id"
+          :name="city.title"
+          :lat-lng="getCoord(city.location.lat,city.location.lng)">
+        <l-icon icon-url="/city_point.png" :icon-size="[56,56]" />
+        <l-popup :content="city.description"></l-popup>
+      </l-marker>
+    </l-map>
   </div>
 </template>
 
 <script>
-
+import "leaflet/dist/leaflet.css"
+import { latLng, Icon} from "leaflet";
+import { LMap, LTileLayer, LMarker, LPopup, LIcon } from "@vue-leaflet/vue-leaflet"
 export default {
   name: "home",
+  components: { LMap, LTileLayer, LMarker, LPopup, LIcon},
   data() {
     return {
-      // text: '',
-      // user: this.$store.getters.USER,
-      // folder: {
-      //   selected: 0,
-      //   list: [
-      //     ''
-      //   ]
-      // },
-      // chats: {
-      //   page: 0,
-      //   selected: undefined,
-      //   messages: [],
-      //   list: {
-      //     0: {}
-      //   },
-      // },
-      // finded: [
-      //
-      // ],
-      // searchText: ''
+      zoom: 13,
+      center: [55.75579833984375, 37.61759948730469],
+      cities: []
     }
   },
   mounted() {
-    // this.loadData()
-    // // this.folder.list = [
-    // //   '', ...this.$store.getters.FOLDER
-    // // ]
-    // this.$emitter.on("longpool", type => {
-    //   console.log(type)
-    //   this.loadData()
-    // });
-    // this.$emitter.on("update", type => {
-    //   console.log(type)
-    //   this.loadData()
-    // });
-    // setInterval(()=>{
-    //   if(this.chats.selected){
-    //     this.$api.get(`messages/${this.chats.selected.id}`).then(res=>{
-    //       this.chats.messages = []
-    //       this.chats.messages = res.messages
-    //     })
-    //   }
-    // },200)
-    // this.$refs.body.scrollTo(0, this.$refs.messages.scrollHeight);
+    this.$api.get('cities').then(res=>{
+      console.log(res.cities)
+      this.cities.push(...res.cities)
+    })
   },
   methods: {
-    // loadData() {
-    //   this.$api.get(`chat?page=${this.chats.page}&folder=${this.folder.selected}`).then(res => {
-    //     console.log(res)
-    //     this.chats.list[res.folder] = res.chats
-    //     // let chats = []
-    //     // if(this.chats.list[String(res.folder)]){
-    //     //   Object.keys(this.chats.list[String(res.folder)]).forEach(key=>{
-    //     //     console.log(String(key),String(res.folder),typeof this.chats.list[String(res.folder)][String(key)],this.chats.list[String(res.folder)][String(key)])
-    //     //     chats.push(...this.chats.list[String(res.folder)][String(key)])
-    //     //   })
-    //     //   this.chats.list[String(res.folder)] = chats
-    //     // }
-    //   })
-    //   if(this.chats.selected){
-    //     this.$api.get(`messages/${this.chats.selected.id}`).then(res=>{
-    //       this.chats.messages = []
-    //       this.chats.messages = res.messages
-    //       setTimeout(()=>{
-    //         this.$refs.body.scrollTo(0, this.$refs.messages.scrollHeight);
-    //       },100)
-    //     })
-    //   }
-    // },
-    // selectFolder(){
-    //   this.loadData()
-    // },
-    // selectChat(id) {
-    //   this.chats.selected = id
-    //   this.loadData()
-    // },
-    // call() {
-    //   this.$store.dispatch('SET_CONNECT_TO', this.text)
-    //   console.log(this.$peer);
-    //   this.$peer.call(this.text)
-    // },
-    // copy() {
-    //   navigator.clipboard.writeText(this.$store.getters.PEERID)
-    // },
-    // sendMessage(){
-    //   if(this.$refs.message.value.replaceAll(' ','').replaceAll('\n','').length > 0){
-    //     this.$api.post(`messages/${this.chats.selected.id}`,{},{
-    //       content: this.$refs.message.value,
-    //     }).then(()=>{
-    //       this.$refs.message.value = ""
-    //       this.loadData()
-    //     })
-    //   }
-    // },
-    // search(){
-    //   if(this.$refs.search.value.replaceAll(' ','').length > 0){
-    //     this.$api.get(`user/search?text=${this.$refs.search.value}`).then(res=>{
-    //       this.finded = res.users
-    //     })
-    //   }
-    // },
-    // callTo(){
-    //   this.$api.get(`user/callinfo/${this.chats.selected.id}`).then(res=>{
-    //     console.log(res.callinfo[0].peer)
-    //   })
-    // }
+    getCoord(a,b){
+      return latLng(a,b)
+    },
   }
 }
 </script>
 
 <style lang="scss" scoped>
-
+.container{
+  //flex: 1 0 auto;
+  .leaflet-control-attribution a{
+    display: none;
+    position: absolute;
+    top: -9999;
+  }
+}
+</style>
+<style>
+.leaflet-control-attribution a{
+  display: none;
+}
+.leaflet-control-zoom{
+  margin-top: calc(100vh - 80px) !important;
+}
 </style>

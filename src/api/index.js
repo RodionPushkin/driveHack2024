@@ -1,4 +1,4 @@
-class api {
+  class api {
   constructor(url) {
     this.url = url
   }
