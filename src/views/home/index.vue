@@ -6,53 +6,174 @@
                     layer-type="base"
                     name="hackers54"></l-tile-layer>
       <l-marker
-          v-if="this.cities.length > 0"
-          v-for="city in this.cities"
-          :key="city.id"
-          :name="city.title"
-          :lat-lng="getCoord(city.location.lat,city.location.lng)">
-        <l-icon icon-url="/city_point.png" :icon-size="[56,56]" />
-        <l-popup :content="city.description"></l-popup>
+          :ref="`cameraMarker${camera.id}`"
+          v-for="camera in this.cameras"
+          :key="camera.id"
+          :name="camera.title"
+          :lat-lng="getCoord(camera.location.lat,camera.location.lng)"
+          @click="openPopup(camera)"
+      >
+        <l-icon icon-url="/dot-green.png" :icon-size="[50,50]"/>
+        <l-tooltip>
+          Нажмите чтобы просмотреть изображение с камеры
+        </l-tooltip>
       </l-marker>
     </l-map>
+    <searchComponent :hint="hint" @searchsubmit="submit" @searchinput="search"></searchComponent>
+    <div class="popup" v-show="popup.isActive" @click="closePopup()">
+      <div>
+        <p class="title">{{popup?.camera?.title}}</p>
+        <p class="description" v-html="description"></p>
+        <button class="button" @click="closePopup()">Закрыть</button>
+      </div>
+      <img ref="videoPlayer">
+    </div>
   </div>
 </template>
 
 <script>
 import "leaflet/dist/leaflet.css"
 import { latLng, Icon} from "leaflet";
-import { LMap, LTileLayer, LMarker, LPopup, LIcon } from "@vue-leaflet/vue-leaflet"
+import searchComponent from "@/components/search.component.vue";
+import {LMap, LTileLayer, LMarker, LPopup, LIcon, LTooltip} from "@vue-leaflet/vue-leaflet"
 export default {
   name: "home",
-  components: { LMap, LTileLayer, LMarker, LPopup, LIcon},
+  components: {LTooltip, LMap, LTileLayer, LMarker, LPopup, LIcon, searchComponent},
   data() {
     return {
       zoom: 13,
       center: [55.75579833984375, 37.61759948730469],
-      cities: []
+      cities: [],
+      cameras: [],
+      socket: null,
+      videos: [],
+      description: '',
+      popup: {
+        isActive: false,
+        camera: null
+      },
+      hint: ''
     }
   },
   mounted() {
     this.$api.get('cities').then(res=>{
-      console.log(res.cities)
+      // console.log(res.cities)
       this.cities.push(...res.cities)
     })
+    this.$api.get('camera').then(res=>{
+      // console.log(res.cameras)
+      this.cameras.push(...res.cameras)
+    })
+    setInterval(()=>{
+      this.$api.get('camera').then(res=>{
+        this.cameras.push(...res.cameras)
+        for (let i = 0; i < this.cameras.length; i++) {
+          if(this.cameras[i].id == this.popup.camera.id){
+            this.description = this.cameras[i].description
+          }
+        }
+      })
+    }, 1000)
   },
   methods: {
     getCoord(a,b){
       return latLng(a,b)
     },
-  }
+    initializeWebSocket(url){
+      this.socket = new WebSocket(url);
+      this.socket.binaryType = 'arraybuffer';
+      const mediaSource = new MediaSource();
+      this.$refs.videoPlayer.src = URL.createObjectURL(mediaSource);
+      this.socket.onopen = () => {
+        console.log('WebSocket connection established');
+      };
+      this.socket.onmessage = (event) => {
+        try {
+          if (event.data instanceof ArrayBuffer) {
+            const blob = new Blob([event.data], { type: 'image/jpeg' });
+            const url = URL.createObjectURL(blob);
+            this.$refs.videoPlayer.src = url;
+          }
+        }catch {
+          this.$refs.videoPlayer.src = '/__Iphone-spinner-1.gif';
+        }
+      };
+      this.socket.onclose = () => {
+        console.log('WebSocket connection closed');
+      };
+    },
+    openPopup(camera){
+      console.log(camera)
+      this.popup.isActive = true
+      this.popup.camera = camera
+      this.description = camera.description
+      this.initializeWebSocket(camera.source)
+    },
+    closePopup(){
+      this.popup.camera = null
+      this.popup.isActive = false
+      this.socket.close()
+    },
+    search({search}){
+      if(search.length == 0){
+        this.hint = ''
+        return
+      }
+      const names = [...this.cities, ...this.cameras]
+      for (let i = 0; i < names.length; i++) {
+        if(names[i].title.slice(0,search.length).toLowerCase() == search.toLowerCase()){
+          this.hint = search+names[i].title.slice(search.length,names[i].title.length);
+          break
+          return
+        }else this.hint = ''
+      }
+    },
+    submit(text){
+      const names = [...this.cities, ...this.cameras]
+      for (let i = 0; i < names.length; i++){
+        if(names[i].title.toLowerCase() == text.hint.toLowerCase()){
+          this.center = this.getCoord(names[i].location.lat,names[i].location.lng)
+          break
+        }
+      }
+    }
+  },
 }
 </script>
 
 <style lang="scss" scoped>
-.container{
-  //flex: 1 0 auto;
-  .leaflet-control-attribution a{
-    display: none;
-    position: absolute;
-    top: -9999;
+.popup{
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  position: absolute;
+  z-index: 99999;
+  top: 0;
+  left: 0;
+  border-radius: 8px;
+  background: rgba(236, 236, 236, 0.5);
+  backdrop-filter: blur(4px);
+  padding: 56px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  //box-shadow: rgba(17, 12, 46, 0.15) 0px 48px 100px 0px;
+  .title{
+    font-size: 20px;
+  }
+  img{
+    //width: 80vw;
+    height: 80vh;
+    width: 100%;
+    max-width: 720px;
+    max-height: 480px;
+    border-radius: 16px;
+    background: #000;
+    object-fit: contain;
+    margin: 0 auto;
+  }
+  .button{
+    margin: 16px 0 16px auto;
   }
 }
 </style>
@@ -62,5 +183,22 @@ export default {
 }
 .leaflet-control-zoom{
   margin-top: calc(100vh - 80px) !important;
+}
+.search{
+  position: absolute;
+  z-index: 99999;
+  bottom: 10vh;
+  left: 50%;
+  max-width: 80vw;
+  height: 80px;
+  margin-left: -40vw;
+  border-radius: 16px;
+  box-shadow: rgba(17, 12, 46, 0.15) 0px 48px 100px 0px;
+  input{
+    background: rgba(247, 247, 247, 0.95);
+    border-radius: 8px;
+    height: 100%;
+    color: #0B0000;
+  }
 }
 </style>
